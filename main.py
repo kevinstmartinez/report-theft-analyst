@@ -27,4 +27,19 @@ sc._jsc.hadoopConfiguration().set('fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFi
 
 spark=SparkSession(sc)
 
+s3 = boto3.client(
+    's3',
+    aws_access_key_id = os.getenv('aws_access_key_id'),
+    aws_secret_access_key = os.getenv('aws_secret_access_key'),
+    region_name = os.getenv('region')
+)
 
+bucket = s3.list_buckets()['Buckets'][0]['Name']
+files = s3.list_objects_v2(Bucket = bucket)
+
+Key = files['Contents'][0]['Key']
+
+path = f"s3a://{bucket}/{Key}"
+
+s3_df = spark.read.option('header', True).csv(path)
+s3_df.show()
